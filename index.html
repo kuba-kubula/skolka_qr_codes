@@ -338,7 +338,9 @@ function render(asTable = false) {
   const accountBankCode = $$("#account_bank_code")[0].value.trim();
   const accountBankCodeClean = accountBankCode.replace(/[^0-9]/g, "-");
   const accountBankLong = $$("#account_bank_long")[0].value.trim();
-  const accountBankLongClean = accountBankLong.replace(/[^0-9]/g, "-");
+  const accountBankLongClean = accountBankLong.split(/[^0-9]/).map((el, i) => {
+    return i > 0 ? el.padStart(10, "0") : el.padStart(6, "0");
+  }).join("-").replace(/[^0-9]/g, "-");
 
   const PRAZDNINY = 6;
   if (now.getMonth() > PRAZDNINY) {
@@ -372,7 +374,7 @@ function render(asTable = false) {
 
   splatnost = new Date($$("#payment_due")[0].value).toISOString().split("T")[0].split("-").reverse().join(".");
 
-  const bankAccount = "CZ08" + accountBankCode.toString().padStart(4, "0") + accountBankLong.toString().padStart(16, "0");
+  const bankAccountQr = "CZ08" + accountBankCodeClean.toString().padStart(4, "0") + accountBankLongClean.toString().padStart(16, "0");
 
   const classes = $$(".trida");
 
@@ -432,7 +434,7 @@ function render(asTable = false) {
         const msg = [
           'SPD',
           '1.0',
-          `ACC:${bankAccount}`,
+          `ACC:${bankAccountQr}`,
           `AM:${castka}`,
           'CC:CZK',
           `MSG:SRPS SKARVADOVA ${withoutAccents.join(" ")}`,
