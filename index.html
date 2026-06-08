@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="">
+<head>
+<meta charset="utf-8">
+<title></title>
+<meta name="description" content="">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style type="text/css">
+body, html { padding: 0; margin: 0; }
+body { padding: 0 1cm 0 1cm; margin: 0; font-family: Times New Roman; }
+html body div[style] {
+  display: none !important;
+  overflow: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+button { margin: 5pt 10pt; }
+h1 { display: block; padding: 5pt 0 10pt; margin: 0; font-size: 14pt; line-height: 1.0; }
+
+ol, ul { padding: 0; margin: 0; font-size: 11pt; list-style-type: none; }
+ol li { height: 4.1cm; padding: 0; margin: 0 0 0.7cm; position: relative; width: 13cm; display: inline-block; border: 1px solid #000; }
+ol li:nth-child(even) {
+  margin-left: 1.3cm;
+}
+
+div table, td, th {
+  border: 1px solid #000;
+  border-spacing: 0;
+  border-collapse: collapse;
+  font-family: Times New Roman; 
+}
+
+div.asTable {
+  margin: 0 0 1cm 0;
+}
+
+div.asTable table {
+  min-width: 50em;
+  table-layout: fixed;
+}
+div.asTable th:nth-of-type(1) {
+  width: 5%;
+  font-weight: bold;
+}
+div.asTable th:nth-of-type(2) {
+  width: 6em;
+}
+div.asTable th:nth-of-type(3) {
+  width: 20em;
+}
+div.asTable th:nth-of-type(4) {
+  width: 9em;
+}
+div.asTable th:nth-of-type(5) {
+  width: 9em;
+}
+
+div th { background: #eee; }
+div td, div th {
+  padding: 4pt 3pt 3pt;
+  line-height: 1.0;
+  font-size: 12pt;
+}
+
+ol li:after {
+  content: 'Při platbě vždy uvádějte variabilní a specifický symbol';
+  left: 0;
+  right: 0;
+  top: 100%;
+  font-size: 10pt;
+  padding-top: 4pt;
+  line-height: 1.0;
+  position: absolute;
+  text-align: center;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+h1 span { padding: 0 3pt; position: relative; font-size: 11pt; }
+h1 input {
+  width: 2em;
+  position: relative;
+}
+h1 span input {
+  width: 4em;
+}
+h1 span::before {
+  content: "(platba:";
+  display: inline-block;
+  font-weight: normal;
+  padding-right: 3pt;
+}
+h1 span::after {
+  content: ")";
+  padding-left: 3pt;
+  font-weight: normal;
+}
+
+ol li:nth-child(6) {
+  break-after: page;
+}
+
+.printing .trida.renderWithQrCode:first-of-type::before {
+  content: "Nyní stačí v prohlížeči vybrat Tisk do PDF a nastavit Měřítko 100 %, bez (vlastních) Okrajů. Styly stránky nastaví 1 cm okraje.";
+  padding: 5pt 10pt 4pt;
+  margin: 4pt 6pt;
+  line-height: 1.1;
+  color: #000;
+  background-color: #fcc;
+  display: inline-block;
+  border-radius: 5pt;
+}
+.paymentQr {
+  clear: both;
+  width: 150px;
+  height: 150px;
+  background: #fff;
+  display: inline-block;
+  position: absolute;
+  right: 2.5pt;
+  top: 3pt;
+  clip: rect(0 4cm 4cm 0);
+}
+
+.leftCol, .rightCol { line-height: 11pt; font-size: 11pt; float: left; border-style: solid; border-color: #000; border-width: 0; box-sizing: border-box; }
+
+.leftCol { font-weight: bold; padding: 3pt 0 2pt 6pt; clear: both; width: 3.5cm; }
+.rightCol { font-weight: normal; padding: 3pt 0 2pt 6pt; width: 5.3cm; }
+
+.leftCol { border-top-width: 1px; border-left-width: 0; }
+.rightCol { border-top-width: 1px; border-left-width: 0; }
+
+.leftCol:nth-of-type(1), .rightCol:nth-of-type(1) { border-top-width: 0; }
+.leftCol:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 3.5cm;
+  width: 0;
+  border-left: 1px solid #000;
+  bottom: 0;
+}
+
+.printing textarea, .printing input, .printing h1 span, .printing .ucet {
+  display: none;
+  margin: 0;
+}
+
+.printing h1:before {
+  content: attr(data-trida_id);
+}
+.ucet { margin: 0; padding: 0.5em; }
+.ucet span:first-of-type::after {
+  content: " / ";
+}
+.ucet span input {
+  text-align: right;
+}
+
+@page {
+  size: a4 landscape;
+  padding: 0.7cm 0 0 0;
+  margin: 0 0 0.4cm 0;
+}
+
+</style>
+<style media="print">
+button, textarea, input, h1 span, .hideOnPrint, .printing .trida.renderWithQrCode:first-of-type::before {
+  display: none !important;
+}
+.trida {
+  break-before: page;
+}
+.printing table td, .printing table th {
+  font-size: 11pt;
+}
+</style>
+</head>
+
+<body>
+
+<button onclick="render(true)">Vygenerovat seznamy deti a var.symbolu</button>
+<button onclick="render(false)">Vygenerovat platebni udaje k tisku s QR kody</button>
+
+<p class="ucet hideOnPrint">
+  <span><input type="text" id="account_bank_long" placeholder="Číslo bankovního účtu" value="8861531002" maxlength="18" size="20" /></span>
+  <input type="text" id="account_bank_code" placeholder="Kód banky" value="5500" maxlength="4" size="5" />
+</p>
+
+<div class="trida">
+<h1><input type="text" value="30" maxlength="3" size="3" />. Čápi <span><input class="castka" type="number" value="1200" size="6" maxlength="5" /></span></h1>
+<textarea cols="40" rows="25" id="txt_capi">
+Čápi 01
+Čápi 02
+Čápi 03
+Čápi 04
+Čápi 05
+Čápi 06
+Čápi 07
+Čápi 08
+Čápi 09
+Čápi 10
+Čápi 11
+Čápi 12
+Čápi 13
+Čápi 14
+Čápi 15
+Čápi 16
+Čápi 17
+Čápi 18
+Čápi 19
+Čápi 20
+Čápi 21
+</textarea>
+</div>
+
+<div class="trida">
+<h1><input type="text" value="31" maxlength="3" size="3" />. Pavoučci <span><input class="castka" type="number" value="1200" size="6" maxlength="5" /></span></h1>
+<textarea cols="40" rows="25" id="txt_pavoucci">
+Pavoučci 01
+Pavoučci 02
+Pavoučci 03
+Pavoučci 04
+Pavoučci 05
+Pavoučci 06
+Pavoučci 07
+Pavoučci 08
+Pavoučci 09
+Pavoučci 10
+Pavoučci 11
+Pavoučci 12
+Pavoučci 13
+Pavoučci 14
+Pavoučci 15
+Pavoučci 16
+Pavoučci 17
+Pavoučci 18
+Pavoučci 19
+Pavoučci 20
+Pavoučci 21
+Pavoučci 22
+</textarea>
+</div>
+
+<div class="trida">
+<h1><input type="text" value="32" maxlength="3" size="3" />. Krtečci <span><input class="castka" type="number" value="1200" size="6" maxlength="5" /></span></h1>
+<textarea cols="40" rows="25" id="txt_krtecci">
+Krtečci 01
+Krtečci 02
+Krtečci 03
+Krtečci 04
+Krtečci 05
+Krtečci 06
+Krtečci 07
+Krtečci 08
+Krtečci 09
+Krtečci 10
+Krtečci 11
+Krtečci 12
+Krtečci 13
+Krtečci 14
+Krtečci 15
+Krtečci 16
+Krtečci 17
+Krtečci 18
+Krtečci 19
+Krtečci 20
+Krtečci 21
+Krtečci 22
+</textarea>
+</div>
+
+<div class="trida">
+<h1><input type="text" value="33" maxlength="3" size="3" />. Velryby <span><input class="castka" type="number" value="1500" size="6" maxlength="5" /></span></h1>
+<textarea cols="40" rows="25" id="txt_velryby">
+Velryby 01
+Velryby 02
+Velryby 03
+Velryby 04
+Velryby 05
+Velryby 06
+Velryby 07
+Velryby 08
+Velryby 09
+Velryby 10
+Velryby 11
+Velryby 12
+Velryby 13
+Velryby 14
+Velryby 15
+Velryby 16
+Velryby 17
+Velryby 18
+Velryby 19
+Velryby 20
+Velryby 21
+</textarea>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.js"></script>
+<script type="text/javascript">
+function toNormalForm(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function $$(sel, parent) {
+  return Array.from((parent || document).querySelectorAll(sel));
+}
+
+function escapeRegExp(str) {
+  return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+}
+
+function replaceAll(str, find, replace) {
+  return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
+}
+
+function rawToDataUri(raw) {
+  var encoded = raw.replace(/\s+/g, " ")
+    .replaceAll("> <", "><") // normalise spaces elements
+    .replaceAll("; }", ";}"); // normalise spaces css
+  return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(encoded);
+}
+
+function render(asTable = false) {
+  let tridaJmeno, tridaSymbol, castka, diteIdentifikace, diteVarSym, splatnost;
+
+  const now = new Date();
+  const yearPlus = new Date(now);
+  yearPlus.setFullYear(now.getFullYear() + 1);
+  const yearMinus = new Date(now);
+  yearMinus.setFullYear(now.getFullYear() - 1);
+  let rocnik = "";
+
+  const accountBankCode = $$("#account_bank_code")[0].value.trim();
+  const accountBankCodeClean = accountBankCode.replace(/[^0-9]/g, "-");
+  const accountBankLong = $$("#account_bank_long")[0].value.trim();
+  const accountBankLongClean = accountBankLong.replace(/[^0-9]/g, "-");
+
+  const PRAZDNINY = 6;
+  if (now.getMonth() > PRAZDNINY) {
+    rocnik = `${now.getFullYear() - 2000}${yearPlus.getFullYear() - 2000}`;
+  } else {
+    rocnik = `${yearMinus.getFullYear() - 2000}${now.getFullYear() - 2000}`;
+  }
+
+  const rows = [{
+    t: 'Identifikace',
+    g: () => diteIdentifikace,
+  }, {
+    t: 'Třída',
+    g: () => tridaJmeno,
+  }, {
+    t: 'Platba - SRPŠ',
+    g: () => `${castka},-`, 
+  }, {
+    t: 'Variabilní symbol',
+    g: () => diteVarSym
+  }, {
+    t: 'Specifický symbol',
+    g: () => (`${rocnik}${tridaSymbol.padStart(3, "0")}`),
+  }, {
+    t: 'Číslo účtu',
+    g: () => `${accountBankLong} / ${accountBankCode}`,
+  }, {
+    t: 'Datum splatnosti',
+    g: () => splatnost,
+  }];
+
+  splatnost = new Date($$("#payment_due")[0].value).toISOString().split("T")[0].split("-").reverse().join(".");
+
+  const bankAccount = "CZ08" + accountBankCode.toString().padStart(4, "0") + accountBankLong.toString().padStart(16, "0");
+
+  const classes = $$(".trida");
+
+  classes.forEach((trida) => {
+    const h1$ = $$("h1", trida)[0];
+    const h1 = h1$.innerText;
+
+    const existingTable$ = $$('.asTable, ol', trida);
+    existingTable$.forEach(exTbl => exTbl.parentNode.removeChild(exTbl));
+
+    trida.classList.toggle('renderWithQrCode', !asTable);
+    tridaSymbol = $$("input", h1$)[0].value;
+    trida.parentNode.classList.add('printing');
+
+    h1$.setAttribute("data-trida_id", tridaSymbol);
+
+    tridaJmeno = h1.split('.')[1].trim().split(' ')[0];
+    const castka$ = $$("input.castka", trida)[0];
+    castka = parseInt(castka$.value, 10);
+
+    let thead = '', tbody = '', table;
+    let renderedContent;
+    if (asTable) {
+      renderedContent = document.createElement('div');
+      renderedContent.classList.add('asTable');
+      thead += '<tr><th>' + [
+        '#',
+        'Třída',
+        'Identifikace',
+        'Variabilní symbol',
+        'Specifický symbol',
+      ].join('</th><th>') + '</th></tr>';
+      trida.appendChild(renderedContent);
+      lis = $$("li", trida);
+    } else {
+      renderedContent = document.createElement('ol');
+      trida.appendChild(renderedContent);
+    }
+
+    const txt = $$("textarea", trida)[0];
+    const lines = txt.value.trim().split(/\n/g);
+
+    lines.forEach((val, ind) => {
+      if (!val) {
+        return;
+      }
+      diteIdentifikace = `${val}`;
+      diteVarSym = `${tridaSymbol.padEnd(2, "0")}${(ind + 1).toString().padStart(3, "0")}`;
+      const withoutAccents = toNormalForm(diteIdentifikace).toUpperCase().split(" ");
+      withoutAccents[1] = isNaN(1 * withoutAccents) ? withoutAccents[1][0] : withoutAccents[1];
+
+      if (asTable) {
+        tbody += `<tr><td>${ind + 1}</td><td>${tridaJmeno}</td><td>${diteIdentifikace}</td><td>${diteVarSym}</td><td>${rocnik}${tridaSymbol.padStart(3, "0")}</td></tr>`;
+      } else {
+        const li = document.createElement('li');
+        renderedContent.appendChild(li);
+        const msg = [
+          'SPD',
+          '1.0',
+          `ACC:${bankAccount}`,
+          `AM:${castka}`,
+          'CC:CZK',
+          `MSG:SRPS SKARVADOVA ${withoutAccents.join(" ")}`,
+          `X-VS:${diteVarSym}`,
+          `X-SS:${rocnik}${tridaSymbol.padStart(3, "0")}`,
+        ].join('*');
+
+        rows.forEach((k) => {
+          const left = document.createElement('span');
+          left.classList.add('leftCol');
+          left.appendChild(document.createTextNode(`${k.t}:`));
+          li.appendChild(left);
+          const right = document.createElement('div');
+          right.classList.add('rightCol');
+          right.appendChild(document.createTextNode(k.g()));
+          li.appendChild(right)
+        });
+
+        const c = document.createElement('img');
+        c.setAttribute('class', 'paymentQr');
+        li.appendChild(c);
+
+        QRCode.toString(msg, {
+          errorCorrectionLevel: "L",
+          scale: 1,
+          margin: 1,
+          type: 'svg',
+        }, (err, str) => {
+          if (err) {
+            console.log(err);
+          } else {
+            if (str.indexOf('h35v35H') === -1) {
+              console.log((ind+1) + ' not a version with 35h', msg);
+            }
+            c.src = rawToDataUri(str);
+          }
+        });
+      }
+    });
+    if (asTable) {
+      renderedContent.innerHTML = '<table><thead>' + thead + '</thead><tbody>' + tbody + '</tbody></table>';
+    }
+  });
+}
+setTimeout(function(){
+  const cont = ` Splatnost: <input type="date" id="payment_due" placeholder="Datum splatnosti" value="${new Date().getFullYear()}-10-20" />`;
+  const span = document.createElement("span");
+  span.innerHTML = cont;
+  $$(".ucet.hideOnPrint")[0].appendChild(span);
+},0);
+
+</script>
+</body>
+</html>
